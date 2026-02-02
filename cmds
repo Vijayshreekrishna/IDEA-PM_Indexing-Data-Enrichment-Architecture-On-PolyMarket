@@ -1,0 +1,5 @@
+Indexer cmd of docker
+  ideapm-indexer and ideapm-db
+
+  to start = docker compose up -d
+  -----------------
