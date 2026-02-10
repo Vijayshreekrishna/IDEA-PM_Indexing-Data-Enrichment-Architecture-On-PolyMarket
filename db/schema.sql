@@ -27,10 +27,23 @@ CREATE TABLE IF NOT EXISTS markets_metadata (
     title TEXT,
     description TEXT,
     outcomes JSONB,
+    liquidity NUMERIC, -- [NEW] CLOB Metric
+    volume_24h NUMERIC, -- [NEW] CLOB Metric
+    clob_token_ids JSONB, -- [NEW] For CLOB cross-ref
     source TEXT NOT NULL, -- e.g. 'gamma-api'
     version TEXT, -- API version or schema version
     fetched_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Layer 3: System State
+CREATE TABLE IF NOT EXISTS system_config (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Initialize pause state
+INSERT INTO system_config (key, value) VALUES ('is_paused', 'false') ON CONFLICT (key) DO NOTHING;
 
 -- Keeping legacy markets table for on-chain truth if needed, but primarily using metadata for display
 CREATE TABLE IF NOT EXISTS markets (
@@ -51,8 +64,33 @@ CREATE TABLE IF NOT EXISTS checkpoints (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Layer 3: Domain Optimized Tables
+CREATE TABLE IF NOT EXISTS trades (
+    id SERIAL PRIMARY KEY,
+    condition_id TEXT, -- Might be null if it's a generic order but usually we have it
+    tx_hash TEXT NOT NULL,
+    maker TEXT NOT NULL,
+    taker TEXT NOT NULL,
+    maker_amount NUMERIC NOT NULL,
+    taker_amount NUMERIC NOT NULL,
+    side TEXT, -- 'buy' or 'sell' (inferred)
+    block_number BIGINT NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL,
+    UNIQUE (tx_hash, maker, taker, maker_amount, taker_amount)
+);
+
+CREATE TABLE IF NOT EXISTS positions (
+    owner TEXT NOT NULL,
+    token_id TEXT NOT NULL, -- The 1155 token ID
+    balance NUMERIC NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (owner, token_id)
+);
+
 -- Indices for Layer 3 Queries
 CREATE INDEX idx_events_params_condition_id ON events ((params->>'conditionId')) WHERE params ? 'conditionId';
 CREATE INDEX idx_events_decoded_condition_id ON events ((decoded->>'conditionId')) WHERE decoded ? 'conditionId';
 CREATE INDEX idx_events_block_number ON events(block_number);
 CREATE INDEX idx_blocks_canonical ON blocks(is_canonical);
+CREATE INDEX idx_trades_condition_id ON trades(condition_id);
+CREATE INDEX idx_positions_owner ON positions(owner);

@@ -20,6 +20,11 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: ideapm-indexer
+    ports:
+      - "3000:3000"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     depends_on:
       - db
     env_file:

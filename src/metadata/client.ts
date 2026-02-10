@@ -18,7 +18,7 @@ export const fetchMarketMetadata = async (conditionId: string): Promise<MarketMe
         // Example: Fetching from Polymarket CLOB API or dedicated metadata source
         // This is a placeholder for the actual API call logic
         const response = await axios.get(`${METADATA_BASE_URL}/markets/${conditionId}`);
-        return response.data;
+        return response.data as MarketMetadata;
     } catch (error) {
         console.error(`Failed to fetch metadata for ${conditionId}:`, error);
         return null;

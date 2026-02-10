@@ -1,5 +1,32 @@
-Indexer cmd of docker
-  ideapm-indexer and ideapm-db
+1. Stopping the Application 🛑
+Since the app has two parts (the Docker backend and the Node.js frontend), you need to stop both:
 
-  to start = docker compose up -d
-  -----------------
+Stop the Frontend: Go to the terminal where npm run dev is running and press Ctrl + C.
+Stop the Backend: Run this command in your main project directory:
+powershell
+
+
+docker-compose down
+
+
+This safely stops and removes the indexer and database containers without losing your data.
+2. Starting the Application Again 🚀
+When you're ready to use it again, run these two commands:
+
+Step 1: Start the Backend (Database & Indexer)
+
+powershell
+
+
+docker-compose up -d
+
+
+The -d flag runs it in the background so it doesn't take up your terminal.
+
+Step 2: Start the Frontend
+
+powershell
+
+
+cd frontend
+npm run dev
